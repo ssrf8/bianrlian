@@ -862,13 +862,43 @@ a {
   max-width: 1100px;
 }
 
-.admin-topbar button,
+.admin-topbar h1 {
+  margin: 0;
+}
+
+.admin-topbar p {
+  margin: 6px 0 0;
+  color: #667085;
+}
+
+.admin-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.admin-actions button,
+.pagination button,
 .danger-button {
   min-height: 36px;
-  margin-left: 8px;
+  padding: 0 14px;
   border: 1px solid #d6dce4;
   border-radius: 6px;
   background: #fff;
+  color: #1f2937;
+  font-weight: 600;
+}
+
+.admin-actions button:hover,
+.pagination button:hover:not(:disabled) {
+  border-color: #f0b90b;
+  background: #fff8df;
+}
+
+.pagination button:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
 }
 
 .records {
@@ -931,6 +961,16 @@ a {
   color: #7a808a;
 }
 
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  max-width: 1100px;
+  margin: 22px auto 0;
+  color: #475467;
+}
+
 @media (max-width: 760px) {
   .record {
     grid-template-columns: 1fr;
@@ -939,5 +979,9 @@ a {
   .admin-topbar {
     align-items: flex-start;
     flex-direction: column;
+  }
+
+  .admin-actions {
+    justify-content: flex-start;
   }
 }

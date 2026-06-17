@@ -567,10 +567,14 @@ function AdminPanel({ onBack }: { onBack: () => void }) {
   const [password, setPassword] = useState("");
   const [records, setRecords] = useState<VerificationRecord[]>([]);
   const [error, setError] = useState("");
+  const [sortDirection, setSortDirection] = useState<"desc" | "asc">("desc");
+  const [page, setPage] = useState(1);
+  const pageSize = 8;
 
   async function load(nextToken = token) {
     const data = await fetchVerifications(nextToken);
     setRecords(data);
+    setPage(1);
   }
 
   useEffect(() => {
@@ -595,6 +599,15 @@ function AdminPanel({ onBack }: { onBack: () => void }) {
     await load();
   }
 
+  const sortedRecords = [...records].sort((a, b) => {
+    const left = new Date(a.created_at).getTime();
+    const right = new Date(b.created_at).getTime();
+    return sortDirection === "desc" ? right - left : left - right;
+  });
+  const totalPages = Math.max(1, Math.ceil(sortedRecords.length / pageSize));
+  const currentPage = Math.min(page, totalPages);
+  const pagedRecords = sortedRecords.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+
   if (!token) {
     return (
       <main className="admin-page">
@@ -613,14 +626,20 @@ function AdminPanel({ onBack }: { onBack: () => void }) {
   return (
     <main className="admin-page">
       <header className="admin-topbar">
-        <h1>认证记录</h1>
         <div>
+          <h1>认证记录</h1>
+          <p>{records.length} 条记录</p>
+        </div>
+        <div className="admin-actions">
+          <button onClick={() => setSortDirection(sortDirection === "desc" ? "asc" : "desc")}>
+            时间{sortDirection === "desc" ? "最新优先" : "最早优先"}
+          </button>
           <button onClick={() => load()}>刷新</button>
           <button onClick={() => { localStorage.removeItem("adminToken"); setToken(""); }}>退出</button>
         </div>
       </header>
       <section className="records">
-        {records.map((record) => (
+        {pagedRecords.map((record) => (
           <article className="record" key={record.id}>
             <div>
               <h2>{record.account}</h2>
@@ -633,6 +652,17 @@ function AdminPanel({ onBack }: { onBack: () => void }) {
         ))}
         {!records.length && <p className="empty">暂无认证记录</p>}
       </section>
+      {!!records.length && (
+        <nav className="pagination" aria-label="分页">
+          <button disabled={currentPage === 1} onClick={() => setPage((value) => Math.max(1, value - 1))}>
+            上一页
+          </button>
+          <span>第 {currentPage} / {totalPages} 页</span>
+          <button disabled={currentPage === totalPages} onClick={() => setPage((value) => Math.min(totalPages, value + 1))}>
+            下一页
+          </button>
+        </nav>
+      )}
     </main>
   );
 }

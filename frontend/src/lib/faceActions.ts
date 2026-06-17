@@ -131,7 +131,7 @@ export class FaceActionDetector {
       return Math.max(...pitches) - Math.min(...pitches) > 0.12;
     }
     if (key === "blink") {
-      return Math.min(...eyes) < 0.012 && Math.max(...eyes) > 0.02;
+      return Math.min(...eyes) < 0.015 && Math.max(...eyes) > 0.018;
     }
     return Math.max(...mouths) > 0.07;
   }
