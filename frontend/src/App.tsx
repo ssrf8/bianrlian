@@ -388,7 +388,7 @@ function FaceScan({ account, onCancel, onDone }: { account: string; onCancel: ()
   const [state, setState] = useState<ActionDetectionState>({
     completed: [],
     currentIndex: 0,
-    message: "正在启动摄像头",
+    message: "",
     hasFace: false
   });
   const [secondsLeft, setSecondsLeft] = useState(30);
