@@ -8,8 +8,8 @@
 docker compose up -d --build
 ```
 
-- Frontend: http://localhost:8080
-- Admin panel: http://localhost:8080/admin
+- Frontend: http://localhost:3000
+- Admin panel: http://localhost:3000/admin
 - Default admin: `admin` / `change-this-password`
 
 生产部署前请修改 `docker-compose.yml` 中的 `ADMIN_PASSWORD`、`ADMIN_TOKEN_SECRET` 和数据库密码。浏览器摄像头在生产环境通常需要 HTTPS。
