@@ -99,7 +99,7 @@ export class FaceActionDetector {
     if (passed && !this.pendingKey) {
       this.samples = [];
       this.pendingKey = current.key;
-      this.pendingUntil = now + 3000;
+      this.pendingUntil = now + 1500;
       return this.state(current.hint, true);
     }
 
