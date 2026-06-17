@@ -1,0 +1,13 @@
+node_modules/
+dist/
+.vite/
+.cache/
+__pycache__/
+*.py[cod]
+*.tsbuildinfo
+.env
+.env.*
+uploads/
+postgres_data/
+*.log
+
