@@ -66,11 +66,21 @@ export class FaceActionDetector {
   private completed: FaceActionKey[] = [];
   private samples: FrameSample[] = [];
   private lastCompletionAt = 0;
+  private pendingUntil = 0;
 
   update(result: FaceLandmarkerResult): ActionDetectionState {
     const landmarks = result.faceLandmarks?.[0];
     if (!landmarks) {
       return this.state("请将人脸置于框内", false);
+    }
+
+    const now = performance.now();
+    if (this.pendingUntil && now < this.pendingUntil) {
+      return this.state("请保持当前姿势", true);
+    }
+    if (this.pendingUntil && now >= this.pendingUntil) {
+      this.pendingUntil = 0;
+      this.samples = [];
     }
 
     this.samples.push(readSample(landmarks));
@@ -81,16 +91,19 @@ export class FaceActionDetector {
       return this.state("认证动作已完成", true);
     }
 
-    const now = performance.now();
     const ready = now - this.lastCompletionAt > 700;
     const passed = ready && this.check(current.key);
     if (passed) {
       this.completed.push(current.key);
       this.samples = [];
       this.lastCompletionAt = now;
+      this.pendingUntil = now + 1500;
     }
 
     const next = FACE_ACTIONS[this.completed.length];
+    if (passed && next) {
+      return this.state("动作已确认，请稍候", true);
+    }
     return this.state(next ? next.hint : "认证动作已完成", true);
   }
 
