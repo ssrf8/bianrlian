@@ -24,7 +24,7 @@ services:
       ADMIN_USERNAME: admin
       ADMIN_PASSWORD: change-this-password
       ADMIN_TOKEN_SECRET: change-this-secret
-      CORS_ORIGINS: http://localhost,http://localhost:3000,http://127.0.0.1:3000
+      CORS_ORIGINS: http://localhost,http://localhost:8008,http://127.0.0.1:8008
     volumes:
       - uploads:/app/uploads
     depends_on:
@@ -35,7 +35,7 @@ services:
     build:
       context: ./frontend
     ports:
-      - "3000:80"
+      - "8008:80"
     depends_on:
       - backend
 
