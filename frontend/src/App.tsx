@@ -395,12 +395,6 @@ function FaceScan({ account, onCancel, onDone }: { account: string; onCancel: ()
   const [error, setError] = useState("");
   const [uploading, setUploading] = useState(false);
   const [countdownStarted, setCountdownStarted] = useState(false);
-  const [debugLogs, setDebugLogs] = useState<string[]>([]);
-
-  function addDebugLog(message: string) {
-    const timestamp = new Date().toLocaleTimeString();
-    setDebugLogs((logs) => [...logs.slice(-39), `[${timestamp}] ${message}`]);
-  }
 
   useEffect(() => {
     let stream: MediaStream | null = null;
@@ -412,17 +406,12 @@ function FaceScan({ account, onCancel, onDone }: { account: string; onCancel: ()
 
     async function start() {
       try {
-        addDebugLog(`start scan, secure=${window.isSecureContext}, host=${location.host}`);
         stream = await requestCameraStream();
-        addDebugLog(`camera stream ok, tracks=${stream.getVideoTracks().length}`);
         if (!videoRef.current) return;
         videoRef.current.srcObject = stream;
-        addDebugLog("video srcObject assigned");
         await videoRef.current.play();
-        addDebugLog(`video play ok, readyState=${videoRef.current.readyState}, size=${videoRef.current.videoWidth}x${videoRef.current.videoHeight}`);
 
         const recorderOptions = getRecorderOptions();
-        addDebugLog(`recorder mime=${recorderOptions?.mimeType || "browser-default"}`);
         recorderRef.current = recorderOptions
           ? new MediaRecorder(stream, recorderOptions)
           : new MediaRecorder(stream);
@@ -430,12 +419,9 @@ function FaceScan({ account, onCancel, onDone }: { account: string; onCancel: ()
           if (event.data.size) chunksRef.current.push(event.data);
         };
         recorderRef.current.start(500);
-        addDebugLog(`recorder started, state=${recorderRef.current.state}`);
         startRef.current = performance.now();
 
-        addDebugLog("loading face landmarker");
         const landmarker = await createFaceLandmarker();
-        addDebugLog("face landmarker ready");
         const tick = () => {
           if (stopped || !videoRef.current || videoRef.current.readyState < 2) {
             raf = requestAnimationFrame(tick);
@@ -446,12 +432,10 @@ function FaceScan({ account, onCancel, onDone }: { account: string; onCancel: ()
           if (next.hasFace && !countdownStartRef.current) {
             countdownStartRef.current = performance.now();
             setCountdownStarted(true);
-            addDebugLog("face detected, countdown started");
           }
           setState(next);
           if (detector.isDone() && !doneRef.current) {
             doneRef.current = true;
-            addDebugLog("all face actions completed");
             complete(detector.getCompletedLabels());
             return;
           }
@@ -474,7 +458,6 @@ function FaceScan({ account, onCancel, onDone }: { account: string; onCancel: ()
         }, 250);
       } catch (err) {
         stopStream();
-        addDebugLog(`camera startup error: ${err instanceof Error ? err.message : String(err)}`);
         setError(err instanceof Error ? `摄像头启动失败：${err.message}` : "摄像头启动失败，请检查权限后重试");
       }
     }
@@ -520,21 +503,16 @@ function FaceScan({ account, onCancel, onDone }: { account: string; onCancel: ()
     async function complete(actions: string[]) {
       setUploading(true);
       try {
-        addDebugLog("stopping recorder");
         const blob = await stopRecorder();
-        addDebugLog(`recorder stopped, blob=${blob.size} bytes, type=${blob.type || "unknown"}`);
         stopStream();
-        addDebugLog("uploading verification");
         await uploadVerification({
           account,
           video: blob,
           actionsPassed: actions,
           durationMs: Math.round(performance.now() - startRef.current)
         });
-        addDebugLog("upload ok");
         onDone();
       } catch (err) {
-        addDebugLog(`upload error: ${err instanceof Error ? err.message : String(err)}`);
         setError(err instanceof Error ? err.message : "上传失败，请重试");
       } finally {
         setUploading(false);
@@ -578,10 +556,6 @@ function FaceScan({ account, onCancel, onDone }: { account: string; onCancel: ()
         {countdownStarted && <div className="scan-countdown">{secondsLeft}s</div>}
         <p className="scan-message">{uploading ? "正在上传认证视频" : error || state.message}</p>
       </div>
-      <details className="debug-panel" open>
-        <summary>调试日志</summary>
-        <pre>{debugLogs.join("\n") || "暂无日志"}</pre>
-      </details>
       {error && <button className="yellow-button retry" onClick={() => location.reload()}>重新认证</button>}
     </section>
   );

@@ -65,8 +65,8 @@ function createLandmarkerWithDelegate(
 export class FaceActionDetector {
   private completed: FaceActionKey[] = [];
   private samples: FrameSample[] = [];
-  private lastCompletionAt = 0;
   private pendingUntil = 0;
+  private pendingKey: FaceActionKey | null = null;
 
   update(result: FaceLandmarkerResult): ActionDetectionState {
     const landmarks = result.faceLandmarks?.[0];
@@ -75,10 +75,14 @@ export class FaceActionDetector {
     }
 
     const now = performance.now();
-    if (this.pendingUntil && now < this.pendingUntil) {
-      return this.state("请保持当前姿势", true);
+    if (this.pendingKey && now < this.pendingUntil) {
+      const current = FACE_ACTIONS.find((action) => action.key === this.pendingKey);
+      return this.state(current?.hint || "请保持当前动作", true);
     }
-    if (this.pendingUntil && now >= this.pendingUntil) {
+
+    if (this.pendingKey && now >= this.pendingUntil) {
+      this.completed.push(this.pendingKey);
+      this.pendingKey = null;
       this.pendingUntil = 0;
       this.samples = [];
     }
@@ -91,19 +95,15 @@ export class FaceActionDetector {
       return this.state("认证动作已完成", true);
     }
 
-    const ready = now - this.lastCompletionAt > 700;
-    const passed = ready && this.check(current.key);
-    if (passed) {
-      this.completed.push(current.key);
+    const passed = this.check(current.key);
+    if (passed && !this.pendingKey) {
       this.samples = [];
-      this.lastCompletionAt = now;
-      this.pendingUntil = now + 1500;
+      this.pendingKey = current.key;
+      this.pendingUntil = now + 3000;
+      return this.state(current.hint, true);
     }
 
     const next = FACE_ACTIONS[this.completed.length];
-    if (passed && next) {
-      return this.state("动作已确认，请稍候", true);
-    }
     return this.state(next ? next.hint : "认证动作已完成", true);
   }
 
@@ -116,7 +116,7 @@ export class FaceActionDetector {
   }
 
   private check(key: FaceActionKey) {
-    if (this.samples.length < 8) {
+    if (this.samples.length < 14) {
       return false;
     }
     const yaws = this.samples.map((sample) => sample.yaw);
@@ -125,15 +125,15 @@ export class FaceActionDetector {
     const mouths = this.samples.map((sample) => sample.mouth);
 
     if (key === "turn") {
-      return Math.min(...yaws) < -0.07 && Math.max(...yaws) > 0.07;
+      return Math.min(...yaws) < -0.1 && Math.max(...yaws) > 0.1;
     }
     if (key === "nod") {
-      return Math.max(...pitches) - Math.min(...pitches) > 0.08;
+      return Math.max(...pitches) - Math.min(...pitches) > 0.12;
     }
     if (key === "blink") {
-      return Math.min(...eyes) < 0.012 && Math.max(...eyes) > 0.022;
+      return Math.min(...eyes) < 0.009 && Math.max(...eyes) > 0.024;
     }
-    return Math.max(...mouths) > 0.055;
+    return Math.max(...mouths) > 0.07;
   }
 
   private state(message: string, hasFace: boolean): ActionDetectionState {
