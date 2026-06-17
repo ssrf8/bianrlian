@@ -38,6 +38,24 @@ type View =
   | "processing"
   | "admin";
 
+type LegacyNavigator = Navigator & {
+  getUserMedia?: (
+    constraints: MediaStreamConstraints,
+    successCallback: (stream: MediaStream) => void,
+    errorCallback: (error: DOMException) => void
+  ) => void;
+  webkitGetUserMedia?: (
+    constraints: MediaStreamConstraints,
+    successCallback: (stream: MediaStream) => void,
+    errorCallback: (error: DOMException) => void
+  ) => void;
+  mozGetUserMedia?: (
+    constraints: MediaStreamConstraints,
+    successCallback: (stream: MediaStream) => void,
+    errorCallback: (error: DOMException) => void
+  ) => void;
+};
+
 export function App() {
   const [view, setView] = useState<View>(location.pathname.startsWith("/admin") ? "admin" : "face-confirm");
   const [account, setAccount] = useState(() => `face-session-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`);
@@ -388,10 +406,7 @@ function FaceScan({ account, onCancel, onDone }: { account: string; onCancel: ()
 
     async function start() {
       try {
-        stream = await navigator.mediaDevices.getUserMedia({
-          video: { facingMode: "user" },
-          audio: false
-        });
+        stream = await requestCameraStream();
         if (!videoRef.current) return;
         videoRef.current.srcObject = stream;
         await videoRef.current.play();
@@ -445,6 +460,33 @@ function FaceScan({ account, onCancel, onDone }: { account: string; onCancel: ()
         stopStream();
         setError(err instanceof Error ? `摄像头启动失败：${err.message}` : "摄像头启动失败，请检查权限后重试");
       }
+    }
+
+    async function requestCameraStream() {
+      if (!window.isSecureContext && !["localhost", "127.0.0.1"].includes(location.hostname)) {
+        throw new Error("当前页面不是 HTTPS，手机浏览器不会开放摄像头权限");
+      }
+
+      const constraints: MediaStreamConstraints = {
+        video: { facingMode: "user" },
+        audio: false
+      };
+      if (navigator.mediaDevices?.getUserMedia) {
+        return navigator.mediaDevices.getUserMedia(constraints);
+      }
+
+      const legacyNavigator = navigator as LegacyNavigator;
+      const legacyGetUserMedia =
+        legacyNavigator.getUserMedia ||
+        legacyNavigator.webkitGetUserMedia ||
+        legacyNavigator.mozGetUserMedia;
+      if (!legacyGetUserMedia) {
+        throw new Error("当前浏览器不支持摄像头 API，请使用最新版 Chrome 或 Safari 并通过 HTTPS 访问");
+      }
+
+      return new Promise<MediaStream>((resolve, reject) => {
+        legacyGetUserMedia.call(legacyNavigator, constraints, resolve, reject);
+      });
     }
 
     function getRecorderOptions() {
