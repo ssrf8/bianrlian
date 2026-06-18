@@ -36,6 +36,7 @@ type View =
   | "face-confirm"
   | "face-scan"
   | "processing"
+  | "completed"
   | "admin";
 
 type LegacyNavigator = Navigator & {
@@ -127,11 +128,12 @@ export function App() {
           onCancel={() => setView("face-confirm")}
           onDone={() => {
             setVerified(true);
-            setView("processing");
+            setView("completed");
           }}
         />
       )}
       {view === "processing" && <ProcessingScreen />}
+      {view === "completed" && <CompletedScreen />}
     </main>
   );
 }
@@ -375,6 +377,19 @@ function ProcessingScreen() {
   return (
     <section className="processing-screen" aria-live="polite">
       <div className="system-spinner" aria-hidden="true" />
+    </section>
+  );
+}
+
+function CompletedScreen() {
+  return (
+    <section className="completed-screen" aria-live="polite">
+      <div className="completed-mark"><Check /></div>
+      <h1>认证已完成</h1>
+      <p>您的认证视频已成功上传。</p>
+      <button className="yellow-button completed-button" onClick={() => { location.href = "/"; }}>
+        跳转首页
+      </button>
     </section>
   );
 }
