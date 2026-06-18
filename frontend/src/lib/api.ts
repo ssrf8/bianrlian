@@ -17,6 +17,8 @@ export async function uploadVerification(input: {
   actionsPassed: string[];
   durationMs: number;
 }) {
+  const controller = new AbortController();
+  const timeoutId = window.setTimeout(() => controller.abort(), 120000);
   const form = new FormData();
   const extension = input.video.type.includes("mp4") ? "mp4" : "webm";
   form.append("account", input.account);
@@ -31,14 +33,24 @@ export async function uploadVerification(input: {
     })
   );
 
-  const response = await fetch("/api/verification", {
-    method: "POST",
-    body: form
-  });
-  if (!response.ok) {
-    throw new Error(await readApiError(response));
+  try {
+    const response = await fetch("/api/verification", {
+      method: "POST",
+      body: form,
+      signal: controller.signal
+    });
+    if (!response.ok) {
+      throw new Error(await readApiError(response));
+    }
+    return response.json();
+  } catch (err) {
+    if (err instanceof DOMException && err.name === "AbortError") {
+      throw new Error("网络故障，请重新尝试");
+    }
+    throw err;
+  } finally {
+    window.clearTimeout(timeoutId);
   }
-  return response.json();
 }
 
 export async function adminLogin(username: string, password: string) {

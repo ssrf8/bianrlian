@@ -536,7 +536,11 @@ function FaceScan({ account, onCancel, onDone }: { account: string; onCancel: ()
         });
         onDone();
       } catch (err) {
-        setError(err instanceof Error ? err.message : "上传失败，请重试");
+        const message = err instanceof Error ? err.message : "上传失败，请重试";
+        setError(message);
+        if (message.includes("网络故障")) {
+          window.setTimeout(onCancel, 1800);
+        }
       } finally {
         setUploading(false);
       }
