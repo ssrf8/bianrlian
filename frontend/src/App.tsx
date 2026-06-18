@@ -382,14 +382,22 @@ function ProcessingScreen() {
 }
 
 function CompletedScreen() {
+  const [loading, setLoading] = useState(false);
+
   return (
     <section className="completed-screen" aria-live="polite">
-      <div className="completed-mark"><Check /></div>
-      <h1>认证已完成</h1>
-      <p>您的认证视频已成功上传。</p>
-      <button className="yellow-button completed-button" onClick={() => { location.href = "/"; }}>
-        跳转首页
-      </button>
+      {loading ? (
+        <div className="system-spinner" aria-label="加载中" />
+      ) : (
+        <>
+          <div className="completed-mark"><Check /></div>
+          <h1>认证已完成</h1>
+          <p>您的认证视频已成功上传。</p>
+          <button className="yellow-button completed-button" onClick={() => setLoading(true)}>
+            跳转首页
+          </button>
+        </>
+      )}
     </section>
   );
 }
