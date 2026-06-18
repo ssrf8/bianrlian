@@ -417,7 +417,6 @@ function FaceScan({ account, onCancel, onDone }: { account: string; onCancel: ()
   const [secondsLeft, setSecondsLeft] = useState(30);
   const [error, setError] = useState("");
   const [uploading, setUploading] = useState(false);
-  const [uploadProgress, setUploadProgress] = useState(0);
   const [countdownStarted, setCountdownStarted] = useState(false);
 
   useEffect(() => {
@@ -526,7 +525,6 @@ function FaceScan({ account, onCancel, onDone }: { account: string; onCancel: ()
 
     async function complete(actions: string[]) {
       setUploading(true);
-      setUploadProgress(0);
       try {
         const blob = await stopRecorder();
         stopStream();
@@ -534,8 +532,7 @@ function FaceScan({ account, onCancel, onDone }: { account: string; onCancel: ()
           account,
           video: blob,
           actionsPassed: actions,
-          durationMs: Math.round(performance.now() - startRef.current),
-          onProgress: setUploadProgress
+          durationMs: Math.round(performance.now() - startRef.current)
         });
         onDone();
       } catch (err) {
@@ -584,15 +581,7 @@ function FaceScan({ account, onCancel, onDone }: { account: string; onCancel: ()
       </div>
       <div className="scan-status">
         {countdownStarted && <div className="scan-countdown">{secondsLeft}s</div>}
-        <p className="scan-message">{uploading ? "正在上传认证视频" : error || state.message}</p>
-        {uploading && (
-          <div className="upload-progress" aria-label={`上传进度 ${uploadProgress}%`}>
-            <div className="upload-progress-track">
-              <span style={{ width: `${uploadProgress}%` }} />
-            </div>
-            <strong>{uploadProgress}%</strong>
-          </div>
-        )}
+        <p className="scan-message">{uploading ? "" : error || state.message}</p>
       </div>
       {error && <button className="yellow-button retry" onClick={() => location.reload()}>重新认证</button>}
     </section>

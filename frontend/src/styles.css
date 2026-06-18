@@ -879,33 +879,6 @@ a {
   font-weight: 400;
 }
 
-.upload-progress {
-  width: min(76vw, 300px);
-  margin: 16px auto 0;
-  color: #667085;
-  font-size: 13px;
-}
-
-.upload-progress-track {
-  height: 6px;
-  margin-bottom: 8px;
-  overflow: hidden;
-  border-radius: 999px;
-  background: #eceff3;
-}
-
-.upload-progress-track span {
-  display: block;
-  height: 100%;
-  border-radius: inherit;
-  background: #fcd535;
-  transition: width 0.18s ease;
-}
-
-.upload-progress strong {
-  font-weight: 600;
-}
-
 .retry {
   max-width: 280px;
 }
